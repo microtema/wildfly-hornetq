@@ -1,14 +1,19 @@
 package de.seven.fate.queue;
 
+import de.seven.fate.queue.processor.*;
 import org.apache.log4j.Logger;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.ActivationConfigProperty;
+import javax.ejb.EJB;
 import javax.ejb.MessageDriven;
-import javax.ejb.Startup;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.inject.Any;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageListener;
+import javax.jms.TextMessage;
 
 /**
  * Connects to the JMS queue of the HornetQ server.
@@ -20,22 +25,67 @@ import javax.jms.MessageListener;
                 @ActivationConfigProperty(propertyName = "destination", propertyValue = "jms/queue/ExpiryQueue")
         }
 )
-@Startup
 @ApplicationScoped
 public class MessageBean implements MessageListener {
 
     private static final Logger logger = Logger.getLogger(MessageBean.class);
 
-    public void onMessage(Message message) {
-        logger.debug("get message from jms: " + message);
+    @Inject
+    private ByteMessageProcessor bytesMessageProcessor;
 
-        System.out.println("#########################################################");
-        System.out.println("#########################################################");
-        System.out.println("#########################################################");
-        System.out.println("Start JMS");
-        System.out.println("#########################################################");
-        System.out.println("#########################################################");
-        System.out.println("#########################################################");
+    @Inject
+    private MapMessageProcessor mapMessageProcessor;
+
+    @Inject
+    private ObjectMessageProcessor objectMessageProcessor;
+
+    @Inject
+    private StreamMessageProcessor streamMessageProcessor;
+
+    @Inject
+    private TextMessageProcessor textMessageProcessor;
+
+
+    public void onMessage(Message message) {
+
+        try {
+
+            logger.info("process JMSMessage: " + message.getJMSMessageID());
+
+            MessageProcessor messageProcessor = getMessageProcessor(message);
+
+            messageProcessor.process(message);
+
+        } catch (JMSException e) {
+            logger.warn("unable to process jms message" + message, e);
+        }
+    }
+
+
+    private MessageProcessor getMessageProcessor(Message message) {
+        assert message != null;
+
+        if (message instanceof ByteMessageProcessor) {
+            return bytesMessageProcessor;
+        }
+
+        if (message instanceof MapMessageProcessor) {
+            return mapMessageProcessor;
+        }
+
+        if (message instanceof ObjectMessageProcessor) {
+            return objectMessageProcessor;
+        }
+
+        if (message instanceof StreamMessageProcessor) {
+            return streamMessageProcessor;
+        }
+
+        if (message instanceof TextMessage) {
+            return textMessageProcessor;
+        }
+
+        throw new IllegalArgumentException("Unable to find MessageProcessor with message: <" + message.getClass() + ">");
     }
 
 }

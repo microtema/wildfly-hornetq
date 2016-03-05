@@ -11,6 +11,10 @@
 
     <name>Wildfly HornetQ Server</name>
 
+    <build>
+        <finalName>${groupId}-${version}</finalName>
+    </build>
+
     <dependencies>
 
         <dependency>
