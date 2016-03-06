@@ -10,10 +10,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+import javax.jms.*;
 
 /**
  * Connects to the JMS queue of the HornetQ server.
@@ -65,19 +62,19 @@ public class MessageBean implements MessageListener {
     private MessageProcessor getMessageProcessor(Message message) {
         assert message != null;
 
-        if (message instanceof ByteMessageProcessor) {
+        if (message instanceof BytesMessage) {
             return bytesMessageProcessor;
         }
 
-        if (message instanceof MapMessageProcessor) {
+        if (message instanceof MapMessage) {
             return mapMessageProcessor;
         }
 
-        if (message instanceof ObjectMessageProcessor) {
+        if (message instanceof ObjectMessage) {
             return objectMessageProcessor;
         }
 
-        if (message instanceof StreamMessageProcessor) {
+        if (message instanceof StreamMessage) {
             return streamMessageProcessor;
         }
 
